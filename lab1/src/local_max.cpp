@@ -34,7 +34,7 @@ namespace tud::cvlabs
                         break;
                 }
 
-                result.at<uchar>(i, j) = isLocalMax;
+                result.ptr(i)[j] = isLocalMax;
             }
         }
     }
