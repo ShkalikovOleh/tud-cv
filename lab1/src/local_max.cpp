@@ -3,26 +3,38 @@
 
 namespace tud::cvlabs
 {
-    inline void naiveLocalMaxKernel(const cv::Mat &image, const cv::Mat &neigh_mask,
-                                    int rstart, int rend, cv::Mat &result)
+    inline void naiveLocalMaxRawPtrKernel(const cv::Mat &image, const cv::Mat &neigh_mask,
+                                          int rstart, int rend, cv::Mat &result)
     {
         int ncol = image.cols, nrow = image.rows;
 
         double maxValue;
         for (int i = rstart; i < rend; ++i)
         {
-            auto rowPtr = image.ptr(i);
-
             for (int j = 1; j < ncol - 1; ++j)
             {
-                auto slice = image(cv::Range(i - 1, i + 2), cv::Range(j - 1, j + 2)); // get 3x3 region around this pixel
+                auto currValue = image.ptr(i)[j];
+                uchar isLocalMax = 255;
 
-                cv::minMaxLoc(slice, nullptr, &maxValue, nullptr, nullptr, neigh_mask); // get max value of neighbours
-
-                if (maxValue < rowPtr[j]) // check whether it is a local max
+                for (int k = -1; k <= 1; ++k)
                 {
-                    result.at<uchar>(i, j) = 255;
+                    auto imagePtr = image.ptr(i + k);
+                    auto neighPtr = neigh_mask.ptr(1 + k);
+
+                    for (int l = -1; l <= 1; ++l)
+                    {
+                        if (imagePtr[j + l] * neighPtr[1 + l] >= currValue)
+                        {
+                            isLocalMax = 0;
+                            break;
+                        }
+                    }
+
+                    if (!isLocalMax)
+                        break;
                 }
+
+                result.at<uchar>(i, j) = isLocalMax;
             }
         }
     }
@@ -31,7 +43,7 @@ namespace tud::cvlabs
     {
         int c = image.cols, r = image.rows;
         cv::Mat result(r, c, CV_8UC1);
-        naiveLocalMaxKernel(image, neigh_mask, 1, r - 1, result);
+        naiveLocalMaxRawPtrKernel(image, neigh_mask, 1, r - 1, result);
         return result;
     }
 
@@ -45,7 +57,7 @@ namespace tud::cvlabs
             cv::Range(1, r - 1),
             [&](const cv::Range &range)
             {
-                naiveLocalMaxKernel(image, neigh_mask, range.start, range.end, result);
+                naiveLocalMaxRawPtrKernel(image, neigh_mask, range.start, range.end, result);
             });
 
         return result;
