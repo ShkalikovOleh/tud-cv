@@ -37,10 +37,9 @@ void show_result(const cv::Mat &image, const cv::Mat &neigh_mask,
     auto time = (stop - start) / cv::getTickFrequency(); // we have to divide because ticks is not a seconds
     std::cout << title + ": " << time << "s" << std::endl;
 
-    const auto windowName = "Local Maxima " + title;
-
     auto markedImage = markMax(image, res);
 
+    const auto windowName = "Local Maxima " + title;
     cv::namedWindow(windowName, cv::WindowFlags::WINDOW_AUTOSIZE);
     cv::imshow(windowName, markedImage);
 }
@@ -99,6 +98,8 @@ int main(int argc, char **argv)
     show_result(image, mask, localMaxNaive, "Naive");
     show_result(image, mask, localMaxNaiveParallel, "Parallel");
     show_result(image, mask, localMaxDilate, "Dilate");
+
+    show_result(image, mask, maxPlateaus, "Plateaus");
 
     cv::waitKey();
 
