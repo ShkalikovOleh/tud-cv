@@ -47,7 +47,7 @@ void show_result(const cv::Mat &image, const cv::Mat &neigh_mask,
 // To point which pixel we recognize as a neighbor we will use mask of neighbours
 cv::Mat getNeighborhoodMask(int neighboors)
 {
-    auto shapeType = neighboors == 8 ? cv::MorphShapes::MORPH_RECT : cv::MorphShapes::MORPH_RECT;
+    auto shapeType = neighboors == 8 ? cv::MorphShapes::MORPH_RECT : cv::MorphShapes::MORPH_CROSS;
 
     auto mask = cv::getStructuringElement(shapeType, cv::Size(3, 3));
     mask.at<uchar>(1, 1) = 0;
