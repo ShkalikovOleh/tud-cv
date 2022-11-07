@@ -1,5 +1,4 @@
 #include <iostream>
-// #include <execution>
 
 #include <opencv2/highgui.hpp>
 
