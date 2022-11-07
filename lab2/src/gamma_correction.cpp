@@ -1,4 +1,5 @@
 #include <iostream>
+// #include <execution>
 
 #include <opencv2/highgui.hpp>
 
@@ -16,20 +17,8 @@ namespace tud::cvlabs
             lutPtr[i] = 255 * std::pow(i / 255., gamma);
         }
 
-        int nChannels = image.channels();
-        cv::Mat result = cv::Mat::zeros(image.rows, image.cols, CV_8UC(nChannels));
-
-        std::vector<cv::Mat> resChannels;
-        cv::split(image, resChannels);
-        std::vector<cv::Mat> imgChannels;
-        cv::split(image, imgChannels);
-
-        for (int i = 0; i < nChannels; ++i)
-        {
-            cv::LUT(imgChannels[i], lut, resChannels[i]);
-        }
-
-        cv::merge(resChannels, result);
+        cv::Mat result;
+        cv::LUT(image, lut, result);
 
         return std::tuple(result, lut);
     }
