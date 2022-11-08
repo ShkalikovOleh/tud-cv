@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <vector>
+
 #include "sobel_filter.hpp"
 
 namespace tud::cvlabs
@@ -84,5 +87,19 @@ namespace tud::cvlabs
         cv::merge(resChannels, result);
 
         return result;
+    }
+
+    void sobelMain(const cv::Mat &image)
+    {
+        auto result = applySobel(image);
+
+        imshow("Our Sobel Applied", result);
+        imshow("Original Image", image);
+
+        cv::Mat reference;
+        cv::Sobel(image, reference, -1, 1, 0);
+        imshow("Reference Sobel", reference);
+
+        cv::waitKey();
     }
 }
