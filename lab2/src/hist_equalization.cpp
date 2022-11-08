@@ -62,12 +62,12 @@ namespace tud::cvlabs
         return result;
     }
 
-    void showHist(const cv::Mat &hist)
+    void showHist(const cv::Mat &hist, const cv::String &wndName)
     {
         std::vector<uchar> y;
 
         double max = *std::max_element(hist.begin<double>(), hist.end<double>());
-        double norm = (255 - 20) / max;
+        double norm = 255 / max;
 
         std::transform(hist.begin<double>(), hist.end<double>(), std::back_inserter(y),
                        [norm](double h)
@@ -81,7 +81,7 @@ namespace tud::cvlabs
             cv::rectangle(result, cv::Rect(i, 255 - y[i], 1, y[i]), 255);
         }
 
-        imshow("Histogram", result);
+        imshow(wndName, result);
     }
 
     void histEqualMain(const cv::Mat &image)
@@ -89,10 +89,12 @@ namespace tud::cvlabs
         cv::Mat grayImg;
         cv::cvtColor(image, grayImg, cv::COLOR_BGR2GRAY);
 
-        auto hist = calculateHistogram(grayImg);
-        auto result = applyEqualization(grayImg, hist);
+        auto origHist = calculateHistogram(grayImg);
+        auto result = applyEqualization(grayImg, origHist);
+        auto resHist = calculateHistogram(result);
 
-        showHist(hist);
+        showHist(origHist, "Original histogram");
+        showHist(resHist, "Result histogram");
         imshow("Our Hist Equalization", result);
         imshow("Original Image", grayImg);
 
