@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <cmath>
 
 #include <opencv2/highgui.hpp>
 
