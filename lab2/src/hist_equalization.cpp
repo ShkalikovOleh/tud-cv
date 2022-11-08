@@ -62,7 +62,7 @@ namespace tud::cvlabs
         return result;
     }
 
-    void showHist(const cv::Mat &hist, const cv::String &wndName)
+    void showHistForChannel(const cv::Mat &hist, const cv::String &wndName)
     {
         std::vector<uchar> y;
 
@@ -82,6 +82,20 @@ namespace tud::cvlabs
         }
 
         imshow(wndName, result);
+    }
+
+    void showHist(const cv::Mat &hist, const cv::String &wndName)
+    {
+        std::vector<cv::Mat> channels;
+        cv::split(hist, channels);
+
+        int i = 1;
+        std::for_each(channels.begin(), channels.end(),
+                      [&wndName, &i](const cv::Mat &channel)
+                      {
+                          showHistForChannel(channel, wndName + " " + std::to_string(i));
+                          ++i;
+                      });
     }
 
     void histEqualMain(const cv::Mat &image)
