@@ -6,3 +6,4 @@ find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_subdirectory(lab1)
+add_subdirectory(lab2)
