@@ -9,6 +9,20 @@
 
 using namespace tud::cvlabs;
 
+void sobelMain(const cv::Mat &image)
+{
+    auto result = applySobel(image);
+
+    imshow("Our Sobel Applied", result);
+    imshow("Original Image", image);
+
+    cv::Mat reference;
+    cv::Sobel(image, reference, -1, 1, 0);
+    imshow("Reference Sobel", reference);
+
+    cv::waitKey();
+}
+
 void showHist(const cv::Mat &hist)
 {
     std::vector<uchar> y;

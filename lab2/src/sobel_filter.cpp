@@ -41,24 +41,32 @@ namespace tud::cvlabs
 
     cv::Mat applySobelToChannel(const cv::Mat &channel, uint ddepth)
     {
-        uint r = channel.rows, c = channel.cols;
-        cv::Mat result = cv::Mat::zeros(r - 2, c - 2, ddepth);
+        int r = channel.rows - 2, c = channel.cols - 2;
+        cv::Mat result = cv::Mat::zeros(r, c, ddepth);
 
         auto range = cv::Range(0, r * c);
-        cv::parallel_for_(range, [&channel, &result, c, ddepth](const cv::Range &rng)
+        cv::parallel_for_(range, [&channel, &result, r, c, ddepth](const cv::Range &rng)
                           {
                             for (int k = rng.start; k != rng.end; ++k)
                             {
                                 int x = (k / c) + 1;
                                 int y = (k % c) + 1;
+                                if (y == c - 1)
+                                {
+                                    std::cout << "y: " << k << " , " << c << std::endl;
+                                }
+                                else if (x == r - 1)
+                                {
+                                    std::cout << "x: " << k << " , " << c << std::endl;
+                                }
+
                                 sobelKernel(channel, result, x, y, ddepth);
                             } });
 
         return result;
     }
 
-    cv::Mat applySobel(const cv::Mat &image, uint ddepth = CV_8U,
-                       cv::BorderTypes borderType = cv::BorderTypes::BORDER_REFLECT)
+    cv::Mat applySobel(const cv::Mat &image, uint ddepth, cv::BorderTypes borderType)
     {
         cv::Mat paddedImg;
         cv::copyMakeBorder(image, paddedImg, 1, 1, 1, 1, borderType);
@@ -76,19 +84,5 @@ namespace tud::cvlabs
         cv::merge(resChannels, result);
 
         return result;
-    }
-
-    void sobelMain(const cv::Mat &image)
-    {
-        auto result = applySobel(image);
-
-        imshow("Our Sobel Applied", result);
-        imshow("Original Image", image);
-
-        cv::Mat reference;
-        cv::Sobel(image, reference, -1, 1, 0);
-        imshow("Reference Sobel", reference);
-
-        cv::waitKey();
     }
 }
