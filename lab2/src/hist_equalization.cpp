@@ -20,10 +20,8 @@ namespace tud::cvlabs
                            return cv::saturate_cast<uchar>(cdf * 255);
                        });
 
-        cv::Mat lutMat(lut);
-
         cv::Mat result;
-        cv::LUT(image, lutMat, result);
+        cv::LUT(image, lut, result);
 
         return result;
     }
