@@ -5,86 +5,45 @@
 
 namespace tud::cvlabs
 {
-    void sobelKernel(const cv::Mat &image, cv::Mat &res, int x, int y, uint ddepth)
+    cv::Mat applySobel(const cv::Mat &image, uint ddepth, cv::BorderTypes borderType)
     {
-        float value = 0;
-        float neighValue;
+        cv::Mat floatImg;
+        image.convertTo(floatImg, CV_32F); // float helps to avoid overflow
 
-        neighValue = image.ptr(x - 1)[y - 1];
-        value -= neighValue;
+        int r = floatImg.rows, c = floatImg.cols, ch = floatImg.channels();
 
-        neighValue = image.ptr(x)[y - 1];
-        value -= (neighValue + neighValue);
-
-        neighValue = image.ptr(x + 1)[y - 1];
-        value -= neighValue;
-
-        neighValue = image.ptr(x - 1)[y + 1];
-        value += neighValue;
-
-        neighValue = image.ptr(x)[y + 1];
-        value += (neighValue + neighValue);
-
-        neighValue = image.ptr(x + 1)[y + 1];
-        value += neighValue;
-
-        switch (ddepth)
-        {
-        case CV_8U:
-            res.at<uchar>(x - 1, y - 1) = cv::saturate_cast<uchar>(value);
-            break;
-        case CV_16S:
-            res.at<int16_t>(x - 1, y - 1) = cv::saturate_cast<int16_t>(value);
-            break;
-        default:
-            res.at<float>(x - 1, y - 1) = value;
-            break;
-        }
-    }
-
-    cv::Mat applySobelToChannel(const cv::Mat &channel, uint ddepth)
-    {
-        int r = channel.rows - 2, c = channel.cols - 2;
-        cv::Mat result = cv::Mat::zeros(r, c, ddepth);
-
-        auto range = cv::Range(0, r * c);
-        cv::parallel_for_(range, [&channel, &result, r, c, ddepth](const cv::Range &rng)
+        // applying of derivative (-1 0 1) along x axis
+        cv::Mat derX(r, c, CV_32FC(ch));
+        derX.col(0) = floatImg.col(1);
+        derX.col(c - 1) = -floatImg.col(c - 2);
+        cv::parallel_for_(cv::Range(1, c - 1), [&floatImg, &derX](const cv::Range &rng)
                           {
                             for (int k = rng.start; k != rng.end; ++k)
                             {
-                                int x = (k / c) + 1;
-                                int y = (k % c) + 1;
-                                if (y == c - 1)
-                                {
-                                    std::cout << "y: " << k << " , " << c << std::endl;
-                                }
-                                else if (x == r - 1)
-                                {
-                                    std::cout << "x: " << k << " , " << c << std::endl;
-                                }
-
-                                sobelKernel(channel, result, x, y, ddepth);
+                                derX.col(k) = floatImg.col(k + 1) - floatImg.col(k - 1);
                             } });
 
-        return result;
-    }
+        // applying of (1 1 0) over y axis
+        cv::Mat smoothY1(r + 1, c, CV_32FC(ch));
+        smoothY1.row(0) = derX.row(0);
+        smoothY1.row(r) = derX.row(r - 1);
+        cv::parallel_for_(cv::Range(1, r), [&derX, &smoothY1](const cv::Range &rng)
+                          {
+                            for (int k = rng.start; k != rng.end; ++k)
+                            {
+                                smoothY1.row(k) = derX.row(k) + derX.row(k - 1);
+                            } });
 
-    cv::Mat applySobel(const cv::Mat &image, uint ddepth, cv::BorderTypes borderType)
-    {
-        cv::Mat paddedImg;
-        cv::copyMakeBorder(image, paddedImg, 1, 1, 1, 1, borderType);
+        // applying of (0 1 1) over y axis
+        cv::Mat result(r, c, CV_32FC(ch));
+        cv::parallel_for_(cv::Range(0, r), [&smoothY1, &result, ddepth](const cv::Range &rng)
+                          {
+                            for (int k = rng.start; k != rng.end; ++k)
+                            {
+                                result.row(k) = smoothY1.row(k) + smoothY1.row(k + 1);
+                            } });
 
-        std::vector<cv::Mat> imgChannels, resChannels;
-        cv::split(paddedImg, imgChannels);
-
-        std::transform(imgChannels.begin(), imgChannels.end(), std::back_inserter(resChannels),
-                       [ddepth](const cv::Mat &channel)
-                       {
-                           return applySobelToChannel(channel, ddepth);
-                       });
-
-        cv::Mat result;
-        cv::merge(resChannels, result);
+        result.convertTo(result, ddepth);
 
         return result;
     }
