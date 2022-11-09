@@ -3,8 +3,7 @@
 
 namespace tud::cvlabs
 {
-    cv::Mat applySobel(const cv::Mat &image, uint ddepth = CV_8U,
-                       cv::BorderTypes borderType = cv::BorderTypes::BORDER_REFLECT);
+    cv::Mat applySobel(const cv::Mat &image, uint ddepth = CV_8U);
 
     void sobelMain(const cv::Mat &image);
 }

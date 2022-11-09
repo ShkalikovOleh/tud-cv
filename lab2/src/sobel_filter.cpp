@@ -5,7 +5,7 @@
 
 namespace tud::cvlabs
 {
-    cv::Mat applySobel(const cv::Mat &image, uint ddepth, cv::BorderTypes borderType)
+    cv::Mat applySobel(const cv::Mat &image, uint ddepth)
     {
         cv::Mat floatImg;
         image.convertTo(floatImg, CV_32F); // float helps to avoid overflow
