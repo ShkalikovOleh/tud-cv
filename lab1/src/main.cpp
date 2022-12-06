@@ -99,8 +99,6 @@ int main(int argc, char **argv)
     show_result(image, mask, localMaxNaiveParallel, "Parallel");
     show_result(image, mask, localMaxDilate, "Dilate");
 
-    show_result(image, mask, maxPlateaus, "Plateaus");
-
     cv::waitKey();
 
     return 0;

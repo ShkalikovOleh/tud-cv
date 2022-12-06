@@ -77,14 +77,4 @@ namespace tud::cvlabs
 
         return result;
     }
-
-    cv::Mat maxPlateaus(const cv::Mat &image, const cv::Mat &neigh_mask)
-    {
-        cv::Mat result;
-
-        cv::dilate(image, result, neigh_mask);
-        result = image == result; // equal because of plateua has to contain at least 2 point with equal max value
-
-        return result;
-    }
 }
