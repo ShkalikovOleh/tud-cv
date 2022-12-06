@@ -5,3 +5,4 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_subdirectory(bilateral_filter)
 add_subdirectory(lab1)
+add_subdirectory(lab2)
