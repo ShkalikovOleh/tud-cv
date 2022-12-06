@@ -8,6 +8,4 @@ namespace tud::cvlabs
     cv::Mat localMaxNaiveParallel(const cv::Mat &image, const cv::Mat &neigh_mask);
 
     cv::Mat localMaxDilate(const cv::Mat &image, const cv::Mat &neigh_mask);
-
-    cv::Mat maxPlateaus(const cv::Mat &image, const cv::Mat &neigh_mask);
 }
