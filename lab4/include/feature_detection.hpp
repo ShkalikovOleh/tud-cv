@@ -14,7 +14,7 @@ namespace tud::cvlabs
 
     cv::Mat computeR(const cv::Mat &image, float k = 0.05);
 
-    cv::Mat detectCorners(const cv::Mat &image);
+    cv::Mat detectCornersHariss(const cv::Mat &image, float threshold, float k = 0.05);
 
-    cv::Mat detectCornersR(const cv::Mat &image, float threshold);
+    cv::Mat nms(const cv::Mat &image);
 }
