@@ -1,7 +1,10 @@
 #include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <tuple>
 
 #include <opencv2/highgui.hpp>
-#include <algorithm>
 
 #include "feature_detection.hpp"
 #include "pixel_classification.hpp"
@@ -13,7 +16,6 @@ void cornerDetection(const cv::Mat &image)
     cv::Mat grayImage;
     cv::cvtColor(image, grayImage, cv::ColorConversionCodes::COLOR_BGR2GRAY);
 
-    int thrPercent = 75;
     cv::namedWindow("Corners", cv::WINDOW_AUTOSIZE);
 
     cv::TrackbarCallback trackbarCallback = [](int thrPercent, void *data)
@@ -29,7 +31,7 @@ void cornerDetection(const cv::Mat &image)
         auto corners = detectCornersHariss(grayImage, threshold);
 
         auto kernel = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, cv::Size(3, 3));
-        cv::dilate(corners, corners, kernel, cv::Point(-1, -1), 3);
+        cv::dilate(corners, corners, kernel, cv::Point(-1, -1), 3); // to make corner visible on the image
         cv::cvtColor(grayImage, grayImage, cv::ColorConversionCodes::COLOR_GRAY2BGR);
 
         std::vector<cv::Mat> channels;
@@ -42,39 +44,33 @@ void cornerDetection(const cv::Mat &image)
         cv::imshow("Corners", grayImage);
     };
 
-    cv::createTrackbar("Threshold %", "Corners", &thrPercent, 100, trackbarCallback, &grayImage);
+    cv::createTrackbar("Threshold %", "Corners", nullptr, 100, trackbarCallback, &grayImage);
+    cv::setTrackbarPos("Threshold %", "Corners", 75);
     cv::waitKey();
 }
 
 void pixelClassification(const cv::Mat &image)
 {
-    auto c = [](int x, int y, cv::Vec3b color)
+    cfunc c = [](int x, int y, cv::Vec3b color)
     {
-        // cv::Vec3b yellow(0, 127, 127);
-        // cv::Vec3b white(255 / 3, 255 / 3, 255 / 3);
+        cv::Vec3i yellow(8, 208, 231);
+        cv::Vec3i white(241, 250, 247);
+        float threshold = 50;
 
-        // float yc = -yellow.dot(color);
-        // float wc = -white.dot(color);
-        // std::vector<float> c{0, yc, wc};
-
-        std::vector<float> c(3);
-
-        if (color[1] >= 127 && color[2] >= 127)
+        int l1DiffYellow = 0, l1DiffWhite = 0;
+        for (int i = 0; i < 3; ++i)
         {
-            if (color[0] <= 127)
-            {
-                c[1] = -1;
-            }
-            else
-            {
-                c[2] = -1;
-            }
-        }
-        else
-        {
-            c[0] = -1;
+            auto ci = static_cast<int>(color[i]);
+            auto yi = yellow[i];
+            auto wi = white[i];
+            l1DiffYellow += (ci - yi) * (ci - yi);
+            l1DiffWhite += (ci - wi) * (ci - wi);
         }
 
+        float yc = std::sqrt(l1DiffYellow) - threshold;
+        float wc = std::sqrt(l1DiffWhite) - threshold;
+
+        std::vector<float> c{0, yc, wc};
         return c;
     };
 
@@ -87,7 +83,32 @@ void pixelClassification(const cv::Mat &image)
 
     auto mask = classify(image, c, ccZero);
 
+    cv::imshow("Image", image);
     cv::imshow("Simple classification", mask * 127);
+
+    cv::namedWindow("Smooth classification", cv::WINDOW_AUTOSIZE);
+
+    cv::TrackbarCallback trackbarCallback = [](int ccVal, void *data)
+    {
+        auto pair = static_cast<std::pair<cv::Mat, cfunc> *>(data);
+        auto image = pair->first;
+        auto c = pair->second;
+
+        auto ccSmooth = [ccVal](int x1, int y1, cv::Vec3b color1, int x2, int y2, cv::Vec3b color2)
+        {
+            std::vector<float> cc(3);
+            std::fill(cc.begin(), cc.end(), ccVal);
+            return cc;
+        };
+
+        auto smoothMask = classify(image, c, ccSmooth);
+
+        cv::imshow("Smooth classification", smoothMask * 127);
+    };
+
+    auto args = std::make_pair(image, c);
+    cv::createTrackbar("CC value", "Smooth classification", nullptr, 20, trackbarCallback, &args);
+    cv::setTrackbarPos("CC value", "Smooth classification", 1);
 
     cv::waitKey();
 }
