@@ -12,9 +12,9 @@ namespace tud::cvlabs
 
         int xs = x == 0 ? x : x - 1;
         int ys = y == 0 ? y : y - 1;
-        int h = x == nrows - 1 ? 2 : 3;
-        int w = y == ncols - 1 ? 2 : 3;
-        cv::Mat neighs = image(cv::Rect(ys, xs, w, h));
+        int h = y == nrows - 1 ? 2 : 3;
+        int w = x == ncols - 1 ? 2 : 3;
+        cv::Mat neighs = image(cv::Rect(xs, ys, w, h));
 
         auto v = image.at<cv::Vec3b>(point);
         auto phi = c(x, y, v);
@@ -43,14 +43,14 @@ namespace tud::cvlabs
 
         cv::Mat result(nrows, ncols, CV_8UC1);
         std::queue<cv::Point> W;
-        std::unordered_set<int> enqued;
+        std::unordered_set<int> enqueued;
 
         for (int i = 0; i < nrows; ++i)
         {
             for (int j = 0; j < ncols; ++j)
             {
-                W.emplace(i, j);
-                enqued.insert(i * ncols + j);
+                W.emplace(j, i);
+                enqueued.insert(i * ncols + j);
             }
         }
 
@@ -58,11 +58,12 @@ namespace tud::cvlabs
         {
             auto v = W.front();
             W.pop();
-            auto x = v.x, y = v.y;
+            auto y = v.x, x = v.y;
 
-            enqued.erase(x * ncols + y);
+            enqueued.erase(x * ncols + y);
 
-            auto &currClass = result.ptr<uchar>(x)[y];
+            // auto &currClass = result.ptr<uchar>(x)[y];
+            auto &currClass = result.at<uchar>(v);
             auto bestClass = getBestClass(v, result, image, c, cc);
             if (bestClass != currClass)
             {
@@ -82,10 +83,10 @@ namespace tud::cvlabs
                             break;
 
                         auto idx = (x + k) * ncols + y + l;
-                        if (enqued.find(idx) == enqued.end())
+                        if (enqueued.find(idx) == enqueued.end())
                         {
-                            W.emplace(x + k, y + l);
-                            enqued.insert(idx);
+                            W.emplace(y + l, x + k);
+                            enqueued.insert(idx);
                         }
                     }
                 }
