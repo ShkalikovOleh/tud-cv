@@ -1,7 +1,7 @@
 #include "pixel_classification.hpp"
 
 #include <queue>
-#include <unordered_set>
+#include <set>
 #include <numeric>
 
 namespace tud::cvlabs
@@ -43,7 +43,7 @@ namespace tud::cvlabs
 
         cv::Mat result(nrows, ncols, CV_8UC1);
         std::queue<cv::Point> W;
-        std::unordered_set<int> enqueued;
+        std::set<int> enqueued;
 
         for (int i = 0; i < nrows; ++i)
         {
@@ -62,7 +62,6 @@ namespace tud::cvlabs
 
             enqueued.erase(x * ncols + y);
 
-            // auto &currClass = result.ptr<uchar>(x)[y];
             auto &currClass = result.at<uchar>(v);
             auto bestClass = getBestClass(v, result, image, c, cc);
             if (bestClass != currClass)
