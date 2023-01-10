@@ -2,42 +2,10 @@
 
 #include <queue>
 #include <map>
-#include <algorithm>
 #include <limits>
 
 namespace tud::cvlabs
 {
-    void Graph::addEdge(Graph::idx_t from, Graph::idx_t to, float w)
-    {
-        vertices_[from].emplace_back(to, w);
-    }
-
-    Graph::EdgeList::const_iterator Graph::getEdge(Graph::idx_t from, Graph::idx_t to) const noexcept
-    {
-        auto &edges = vertices_[from];
-        return std::find_if(edges.begin(), edges.end(),
-                            [to](const OutEdge &edge)
-                            {
-                                return edge.adj_idx == to;
-                            });
-    }
-
-    Graph::EdgeList::iterator Graph::getEdge(Graph::idx_t from, Graph::idx_t to) noexcept
-    {
-        auto &edges = vertices_[from];
-        return std::find_if(edges.begin(), edges.end(),
-                            [to](const OutEdge &edge)
-                            {
-                                return edge.adj_idx == to;
-                            });
-    }
-
-    Graph::idx_t Graph::addVertex()
-    {
-        vertices_.push_back(EdgeList{});
-        return size() - 1;
-    }
-
     using BFSCallback = std::function<bool(const Graph &, Graph::idx_t, const std::map<Graph::idx_t, Graph::idx_t> &)>;
 
     void BFS(const Graph &resGraph, const Graph::idx_t s, BFSCallback f)
@@ -102,7 +70,7 @@ namespace tud::cvlabs
             return false;
     }
 
-    std::vector<Graph::idx_t> min_cut(Graph &resGraph, const Graph::idx_t s, const Graph::idx_t t)
+    std::vector<Graph::idx_t> min_cut_edmonds_karp(Graph &resGraph, const Graph::idx_t s, const Graph::idx_t t)
     {
         std::vector<Graph::idx_t> reversePath;
         float minCapacity;
@@ -177,7 +145,7 @@ namespace tud::cvlabs
             }
         }
 
-        auto zeroClassIdxs = min_cut(graph, s, t);
+        auto zeroClassIdxs = min_cut_edmonds_karp(graph, s, t);
         cv::Mat result{nrows, ncols, CV_8UC1, cv::Scalar{1}};
 
         for (auto &idx : zeroClassIdxs)
