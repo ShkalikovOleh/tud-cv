@@ -8,40 +8,44 @@ namespace tud::cvlabs
 {
     uchar getBestClass(cv::Point point, const cv::Mat &mask, const cv::Mat &image, const cfunc &c, const ccfunc &cc)
     {
-        int x = point.x, y = point.y, nrows = image.rows, ncols = image.cols;
-
-        int xs = x == 0 ? x : x - 1;
-        int ys = y == 0 ? y : y - 1;
-        int h = y == nrows - 1 ? 2 : 3;
-        int w = x == ncols - 1 ? 2 : 3;
-        cv::Mat neighs = image(cv::Rect(xs, ys, w, h));
+        int x = point.y, y = point.x, nrows = image.rows, ncols = image.cols;
 
         auto v = image.at<cv::Vec3b>(point);
         auto phi = c(x, y, v);
 
-        for (auto it = neighs.begin<cv::Vec3b>(); it != neighs.end<cv::Vec3b>(); ++it)
-        {
-            auto pos = it.pos();
-            if (pos != point)
-            {
-                auto ccVal = cc(x, y, v, pos.x, pos.y, image.at<cv::Vec3b>(pos));
-                auto yw = mask.at<uchar>(pos); // neighbour's label
+        int ks = x > 0 ? -1 : 0;
+        int ke = x < nrows - 1 ? 1 : 0;
+        int ls = y > 0 ? -1 : 0;
+        int le = y < ncols - 1 ? 1 : 0;
 
-                std::transform(ccVal.begin(), ccVal.end(), phi.begin(), phi.begin(), std::plus<>{}); // phi += cc_vw
-                phi[yw] -= ccVal[yw];                                                                // we don't penaltize if we have the same class label
+        for (int k = ks; k <= ke; ++k)
+        {
+            for (int l = ls; l <= le; ++l)
+            {
+                if (k == 0 && l == 0)
+                    continue;
+
+                auto w = *image.ptr<cv::Vec3b>(x + k, y + l);
+                auto yw = *mask.ptr<uchar>(x + k, y + l);
+                auto ccVal = cc(x, y, v, x + k, y + l, yw, w);
+
+                // phi += cc_vw
+                // std::transform(ccVal.begin(), ccVal.end(), phi.begin(), phi.begin(), std::plus<>{});
+                for (int i = 0; i < ccVal.size(); ++i)
+                    phi[i] += ccVal[i];
             }
         }
 
         auto minIt = std::min_element(phi.begin(), phi.end());
 
-        return std::distance(phi.begin(), minIt);
+        return std::distance(phi.begin(), minIt); // return class idx
     }
 
     cv::Mat classify(const cv::Mat &image, const cfunc &c, const ccfunc &cc)
     {
         int nrows = image.rows, ncols = image.cols;
 
-        cv::Mat result(nrows, ncols, CV_8UC1);
+        cv::Mat result(nrows, ncols, CV_8UC1, cv::Scalar(0));
         std::queue<cv::Point> W;
         std::set<int> enqueued;
 
@@ -51,6 +55,13 @@ namespace tud::cvlabs
             {
                 W.emplace(j, i);
                 enqueued.insert(i * ncols + j);
+
+#ifdef BEST_POINTWISE_INIT
+                auto v = image.at<cv::Vec3b>(i, j);
+                auto phi = c(i, j, v);
+                auto minIt = std::min_element(phi.begin(), phi.end());
+                result.at<uchar>(i, j) = std::distance(phi.begin(), minIt);
+#endif
             }
         }
 
@@ -74,12 +85,12 @@ namespace tud::cvlabs
                 int ls = y > 0 ? -1 : 0;
                 int le = y < ncols - 1 ? 1 : 0;
 
-                for (int k = -ks; k <= ke; ++k)
+                for (int k = ks; k <= ke; ++k)
                 {
-                    for (int l = -ls; l <= le; ++l)
+                    for (int l = ls; l <= le; ++l)
                     {
                         if (k == 0 && l == 0)
-                            break;
+                            continue;
 
                         auto idx = (x + k) * ncols + y + l;
                         if (enqueued.find(idx) == enqueued.end())

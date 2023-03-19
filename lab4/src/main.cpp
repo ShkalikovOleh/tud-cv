@@ -70,11 +70,11 @@ void pixelClassification(const cv::Mat &image)
         float yc = std::sqrt(l1DiffYellow) - threshold;
         float wc = std::sqrt(l1DiffWhite) - threshold;
 
-        std::vector<float> c{0, yc, wc};
+        std::vector<float> c{threshold, yc, wc};
         return c;
     };
 
-    auto ccZero = [](int x1, int y1, cv::Vec3b color1, int x2, int y2, cv::Vec3b color2)
+    auto ccZero = [](int x1, int y1, cv::Vec3b color1, int x2, int y2, uchar label2, cv::Vec3b color2)
     {
         std::vector<float> cc(3);
         std::fill(cc.begin(), cc.end(), 0);
@@ -94,10 +94,11 @@ void pixelClassification(const cv::Mat &image)
         auto image = pair->first;
         auto c = pair->second;
 
-        auto ccSmooth = [ccVal](int x1, int y1, cv::Vec3b color1, int x2, int y2, cv::Vec3b color2)
+        auto ccSmooth = [ccVal](int x1, int y1, cv::Vec3b color1, int x2, int y2, uchar label2, cv::Vec3b color2)
         {
             std::vector<float> cc(3);
             std::fill(cc.begin(), cc.end(), ccVal);
+            cc[label2] = 0; // don't penaltize for the equal labels
             return cc;
         };
 
@@ -108,7 +109,7 @@ void pixelClassification(const cv::Mat &image)
 
     auto args = std::make_pair(image, c);
     cv::createTrackbar("CC value", "Smooth classification", nullptr, 20, trackbarCallback, &args);
-    cv::setTrackbarPos("CC value", "Smooth classification", 1);
+    cv::setTrackbarPos("CC value", "Smooth classification", 10);
 
     cv::waitKey();
 }
