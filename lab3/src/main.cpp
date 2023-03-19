@@ -3,6 +3,7 @@
 #include <opencv2/highgui.hpp>
 
 #include "median_filter.hpp"
+#include "connected_component.hpp"
 
 using namespace tud::cvlabs;
 
@@ -31,7 +32,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    // image.convertTo(image, CV_8UC1);
     cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
     std::cout << "\nImage type: " << cv::typeToString(image.type())
@@ -42,18 +42,34 @@ int main(int argc, char **argv)
     {
     case 1:
     {
-        // cv::imshow("Image", image);
-        // cv::Mat reference;
-        // cv::medianBlur(image, reference, 3);
-        // cv::imshow("ref", reference);
-
         auto med3x3 = medianFilter(image, 3, 3);
         cv::imshow("Median 3x3", med3x3);
         cv::waitKey();
     }
     break;
     case 2:
-        break;
+    {
+        cv::threshold(image, image, 128, 255, cv::ThresholdTypes::THRESH_BINARY);
+        auto [labels, components] = floodFilling(image);
+        std::cout << "Number of components: " << components.size() << std::endl;
+
+        cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
+
+        for (auto &&component : components)
+        {
+            std::cout << "Number of points: " << component.n_points() << std::endl;
+            std::cout << "Bounding box: " << component.bounding_box() << std::endl;
+            std::cout << "Centroid: " << component.centroid() << std::endl;
+            std::cout << "Eccentricity: " << component.eccentricity() << std::endl;
+            std::cout << "Orientation: " << component.orientation() << std::endl;
+
+            cv::rectangle(image, component.bounding_box(), cv::Scalar(0, 0, 255));
+        }
+
+        cv::imshow("Binary", image);
+        cv::waitKey();
+    }
+    break;
     case 3:
         break;
     default:

@@ -5,7 +5,6 @@ set(headers include/median_filter.hpp
 
 set(sources src/main.cpp
             src/median_filter.cpp
-            src/connected_component.cpp
             src/flood_filling.cpp)
 
 add_executable( Exercise3 ${sources} ${headers})
