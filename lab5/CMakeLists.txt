@@ -5,6 +5,8 @@ set(headers include/graph.hpp
 
 set(sources src/main.cpp
             src/graph.cpp
+            src/edmonds_karp.cpp
+            src/boykov_kolmogorov.cpp
             src/min_cut.cpp)
 
 add_executable( Exercise5 ${sources} ${headers})
