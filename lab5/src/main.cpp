@@ -59,9 +59,39 @@ void pixelClassification(const cv::Mat &image)
 
     auto args = std::make_pair(image, c);
     cv::createTrackbar("CC value", "Smooth classification", nullptr, 20, trackbarCallback, &args);
-    cv::setTrackbarPos("CC value", "Smooth classification", 1);
+    cv::setTrackbarPos("CC value", "Smooth classification", 10);
 
     cv::waitKey();
+}
+
+void min_cut_max_flow_task1(float w)
+{
+    Graph net{4};
+    net.addEdge(0, 2, 3);
+    net.addEdge(1, 2, w);
+    net.addEdge(1, 3, 2);
+
+    net.addEdge(2, 1, w);
+    net.addEdge(2, 0, 0);
+    net.addEdge(3, 1, 0);
+
+    auto net2 = net;
+    auto res = min_cut_edmonds_karp(net, 0, 3);
+
+    std::cout << "Double directed pipe (w = " << w << ")" << std::endl;
+    std::cout << "S = { ";
+    for (auto &&v : res)
+        std::cout << " " << v << " ";
+    std::cout << "}" << std::endl;
+
+    net2.getEdge(2, 1)->w = 0;
+    auto res2 = min_cut_edmonds_karp(net2, 0, 3);
+
+    std::cout << "One directed pipe (w = " << w << ")" << std::endl;
+    std::cout << "S = { ";
+    for (auto &&v : res2)
+        std::cout << " " << v << " ";
+    std::cout << "}" << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -92,42 +122,11 @@ int main(int argc, char **argv)
               << "\nImage depth: " << cv::depthToString(image.depth())
               << std::endl;
 
+    min_cut_max_flow_task1(1);
+    min_cut_max_flow_task1(3);
+    min_cut_max_flow_task1(5);
+
     pixelClassification(image);
-
-    Graph net{6};
-    net.addEdge(0, 1, 9); // a -> b
-    net.addEdge(0, 2, 8); // a -> c
-    net.addEdge(1, 3, 4); // b -> d
-    net.addEdge(1, 4, 4); // b -> e
-    net.addEdge(2, 4, 5); // c -> e
-    net.addEdge(3, 5, 5); // d -> f
-    net.addEdge(4, 5, 6); // e -> f
-    net.addEdge(2, 5, 3); // c -> f
-
-    net.addEdge(1, 0, 0);
-    net.addEdge(2, 0, 0);
-    net.addEdge(3, 1, 0);
-    net.addEdge(4, 1, 0);
-    net.addEdge(4, 2, 0);
-    net.addEdge(5, 3, 0);
-    net.addEdge(5, 4, 0);
-    net.addEdge(5, 2, 0);
-
-    auto resCorrect = min_cut_edmonds_karp(net, 0, 5);
-    auto res = min_cut_boykov_kolmogorov(net, 0, 5);
-
-    // Graph net{4};
-    // float w = 3;
-    // net.addEdge(0, 2, 3);
-    // net.addEdge(1, 2, w);
-    // net.addEdge(1, 3, 2);
-
-    // // net.addEdge(2, 1, 0);
-    // net.addEdge(2, 1, w);
-    // net.addEdge(2, 0, 0);
-    // net.addEdge(3, 1, 0);
-
-    // auto res = min_cut_edmonds_karp(net, 0, 3);
 
     return 0;
 }
